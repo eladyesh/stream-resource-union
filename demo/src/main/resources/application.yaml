@@ -1,0 +1,7 @@
+kafkaResources:
+  - kafka:
+      topic: otel-traces-a
+      bootstrapServers: localhost:9092
+  - kafka:
+      topic: otel-traces-b
+      bootstrapServers: localhost:9092

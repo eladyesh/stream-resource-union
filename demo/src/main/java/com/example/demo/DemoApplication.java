@@ -1,5 +1,6 @@
 package com.example.demo;
 
+import com.example.demo.model.Span;
 import com.example.demo.stream.KafkaSpanResource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.springframework.boot.CommandLineRunner;
@@ -15,13 +16,18 @@ public class DemoApplication {
     }
 
     @Bean
+    public StreamExecutionEnvironment streamEnv() {
+        return StreamExecutionEnvironment.getExecutionEnvironment();
+    }
+
+    @Bean
     public CommandLineRunner runner(KafkaSpanResource kafkaSpanResource, StreamExecutionEnvironment env) {
         return args -> {
             kafkaSpanResource.unifiedKafkaSpanStream(env)
-                    .map(span -> span.toUpperCase())  // convert to uppercase
-                    .map(span -> ">> PROCESSED SPAN: " + span)
+                    .map(span -> ">> JSON SPAN: " + span)
                     .print();
-            env.execute("Kafka Union Stream");
+
+            env.execute("Kafka Union Stream with JSON Deserialization");
         };
     }
 }

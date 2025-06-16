@@ -59,6 +59,11 @@
             <version>1.16.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
         <!-- SnakeYAML for YAML parsing -->
         <dependency>
             <groupId>org.yaml</groupId>

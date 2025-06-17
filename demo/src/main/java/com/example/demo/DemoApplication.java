@@ -1,7 +1,7 @@
 package com.example.demo;
 
 import com.example.demo.model.Span;
-import com.example.demo.stream.KafkaSpanResource;
+import com.example.demo.stream.SpanStreamBuilder;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -23,13 +23,13 @@ public class DemoApplication {
 
     @Bean
     @Profile("!test")
-    public CommandLineRunner runner(KafkaSpanResource kafkaSpanResource, StreamExecutionEnvironment env) {
+    public CommandLineRunner runner(SpanStreamBuilder builder, StreamExecutionEnvironment env) {
         return args -> {
-            kafkaSpanResource.unifiedKafkaSpanStream(env)
-                    .map(span -> ">> JSON SPAN: " + span)
+            builder.unifiedStream(env)
+                    .map(span -> ">> SPAN: " + span)
                     .print();
 
-            env.execute("Kafka Union Stream with JSON Deserialization");
+            env.execute("Unified Span Stream");
         };
     }
 }

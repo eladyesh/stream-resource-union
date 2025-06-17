@@ -6,14 +6,12 @@ import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.constructor.Constructor;
 
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 @Component
-public class KafkaConfigLoader {
-    public KafkaResourcesWrapper loadConfig(String filePath) throws Exception {
+public class ResourceConfigLoader {
+    public ResourcesWrapper loadConfig(String filePath) throws Exception {
         LoaderOptions loaderOptions = new LoaderOptions();
-        Constructor constructor = new Constructor(KafkaResourcesWrapper.class, loaderOptions);
+        Constructor constructor = new Constructor(ResourcesWrapper.class, loaderOptions);
         Yaml yaml = new Yaml(constructor);
 
         try (InputStream in = getClass().getClassLoader().getResourceAsStream(filePath)) {

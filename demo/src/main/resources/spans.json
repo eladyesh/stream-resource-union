@@ -1,0 +1,4 @@
+[
+  { "traceId": "f1", "span": "file-span-1", "service": "svcA" },
+  { "traceId": "f2", "span": "file-span-2", "service": "svcB" }
+]

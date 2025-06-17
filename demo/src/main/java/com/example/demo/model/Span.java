@@ -5,6 +5,14 @@ public class Span {
     private String span;
     private String service;
 
+    public Span() {}
+
+    public Span(String traceId, String span, String service) {
+        this.traceId = traceId;
+        this.span = span;
+        this.service = service;
+    }
+
     // Getters and setters
     public String getTraceId() {
         return traceId;

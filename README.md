@@ -1,6 +1,3 @@
-Sure! Here’s the full markdown with your commands and added descriptions:
-
-````markdown
 # Kafka Commands
 
 ### Produce message:

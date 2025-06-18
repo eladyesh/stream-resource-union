@@ -1,6 +1,6 @@
 package com.example.demo.stream;
 
-import com.example.demo.config.ResourceConfigLoader;
+import com.example.demo.config.ResourcesWrapper;
 import com.example.demo.config.SpanResource;
 import com.example.demo.model.Span;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -12,19 +12,18 @@ import java.util.List;
 @Component
 public class SpanStreamBuilder {
 
-    private final ResourceConfigLoader loader;
+    private final ResourcesWrapper config;
 
-    public SpanStreamBuilder(ResourceConfigLoader loader) {
-        this.loader = loader;
+    public SpanStreamBuilder(ResourcesWrapper config) {
+        this.config = config;
     }
 
     public DataStream<Span> unifiedStream(StreamExecutionEnvironment env) throws Exception {
-        List<SpanResource> resources = loader.loadConfig("application.yaml").getResources();
+        List<SpanResource> resources = config.getResources();
 
         DataStream<Span> result = null;
         for (SpanResource res : resources) {
-            SpanStreamProvider provider = res.resolveProvider();
-            DataStream<Span> stream = provider.buildStream(env);
+            DataStream<Span> stream = res.resolveProvider().buildStream(env);
             result = (result == null) ? stream : result.union(stream);
         }
 

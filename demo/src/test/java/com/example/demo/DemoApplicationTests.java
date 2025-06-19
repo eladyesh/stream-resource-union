@@ -1,7 +1,9 @@
 package com.example.demo;
 
+import com.example.demo.config.ResolvedSpanResources;
 import com.example.demo.config.ResourcesWrapper;
 import com.example.demo.config.SpanResource;
+import com.example.demo.config.SpanResourceFactory;
 import com.example.demo.model.Span;
 import com.example.demo.stream.SpanStreamBuilder;
 import com.example.demo.stream.SpanStreamProvider;
@@ -11,15 +13,17 @@ import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
@@ -27,6 +31,12 @@ import static org.mockito.Mockito.*;
 public class DemoApplicationTests {
 
     private static final List<String> collected = Collections.synchronizedList(new ArrayList<>());
+
+    @MockBean
+    private ResourcesWrapper resourcesWrapper;
+
+    @MockBean
+    private SpanResourceFactory spanResourceFactory;
 
     @BeforeEach
     void beforeEach() {
@@ -41,28 +51,41 @@ public class DemoApplicationTests {
 
     @Test
     public void testUnifiedStreamWithMocks() throws Exception {
-        // Mock SpanResource and SpanStreamProvider as before
-        SpanResource resource1 = mock(SpanResource.class);
-        SpanResource resource2 = mock(SpanResource.class);
-
+        // Create mocks for providers
         SpanStreamProvider provider1 = mock(SpanStreamProvider.class);
         SpanStreamProvider provider2 = mock(SpanStreamProvider.class);
 
+        // Create SpanResources wrapping those providers
+        SpanResource resource1 = new SpanResource(provider1);
+        SpanResource resource2 = new SpanResource(provider2);
+
+        // Stub ResourcesWrapper to return raw configs (simulate your raw YAML map objects)
+        // Here, we mock raw config maps for two resources
+        List<Map<String, Object>> rawResources = List.of(
+                Map.of("kafka", Map.of("topic", "otel-traces-a")),
+                Map.of("file", Map.of("path", "spans.json"))
+        );
+        resourcesWrapper.setResources(rawResources);
+
+        // Mock factory to convert raw maps to SpanResource (return our prepared SpanResources)
+        when(resourcesWrapper.getResources()).thenReturn(rawResources);
+        when(spanResourceFactory.fromRaw(any())).thenReturn(resource1, resource2);
+
+        // Set up Flink environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
 
+        // Prepare example DataStreams
         DataStream<Span> stream1 = env.fromElements(new Span("trace1", "spanA", "serviceX"));
         DataStream<Span> stream2 = env.fromElements(new Span("trace2", "spanB", "serviceY"));
-
-        when(resource1.resolveProvider()).thenReturn(provider1);
-        when(resource2.resolveProvider()).thenReturn(provider2);
 
         when(provider1.buildStream(env)).thenReturn(stream1);
         when(provider2.buildStream(env)).thenReturn(stream2);
 
-        // Now directly inject a mock ResourcesWrapper into the SpanStreamBuilder
-        ResourcesWrapper wrapper = new ResourcesWrapper(Arrays.asList(resource1, resource2));
-        SpanStreamBuilder builder = new SpanStreamBuilder(wrapper);
+        // Use constructor that takes raw resources and factory to resolve SpanResources
+        ResolvedSpanResources resolved = new ResolvedSpanResources(resourcesWrapper, spanResourceFactory);
+
+        SpanStreamBuilder builder = new SpanStreamBuilder(resolved);
 
         DataStream<Span> unifiedStream = builder.unifiedStream(env);
 
@@ -70,7 +93,7 @@ public class DemoApplicationTests {
                 span.getTraceId() + "|" + span.getSpan() + "|" + span.getService()
         );
 
-        output.addSink(new SinkFunction<String>() {
+        output.addSink(new SinkFunction<>() {
             @Override
             public synchronized void invoke(String value, Context context) {
                 collected.add(value);
@@ -84,9 +107,9 @@ public class DemoApplicationTests {
                 "trace2|spanB|serviceY"
         );
 
-        verify(resource1, times(1)).resolveProvider();
-        verify(resource2, times(1)).resolveProvider();
-        verify(provider1, times(1)).buildStream(env);
-        verify(provider2, times(1)).buildStream(env);
+        // Verify mocks
+        verify(spanResourceFactory, times(2)).fromRaw(any());
+        verify(provider1).buildStream(env);
+        verify(provider2).buildStream(env);
     }
 }

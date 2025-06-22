@@ -29,6 +29,8 @@
     <properties>
         <flink.version>1.16.0</flink.version>
         <java.version>11</java.version> <!-- Flink 1.16 supports Java 8/11 -->
+        <!-- set to false if you don't want your commit to be deployed in an integration environment -->
+        <deploy.integration>true</deploy.integration>
     </properties>
     <dependencies>
         <dependency>

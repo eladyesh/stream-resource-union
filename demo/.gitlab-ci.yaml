@@ -1,35 +1,55 @@
+image: eclipse-temurin:11-jdk
+
 stages:
-  - run-unit-tests
-  - test-build
+  - test
   - build
   - deploy
 
-run-unit-tests:
-  stage: run-unit-tests
-  script:
-    - mvn test   # runs all tests under src/test/java by default
-  rules:
-    - if: '$CI_COMMIT_TAG == null'   # run only if NOT a tagged commit
+variables:
+  CI_REGISTRY: registry.gitlab.com
+  IMAGE_BASE: registry.gitlab.com/eladyesh/flink-springboot-demo/demo
 
-test-build:
-  stage: test-build
-  script:
-    - mvn clean package
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'  # run on MRs only
+before_script:
+  - export EFFECTIVE_TAG="${CI_COMMIT_TAG:-$CI_COMMIT_SHORT_SHA}"
+  - DEPLOY_INTEGRATION=$(grep -oPm1 "(?<=<deploy.integration>)[^<]+" pom.xml || echo "false")
+  - echo "Deploy integration is equal to $DEPLOY_INTEGRATION"
+  - export DEPLOY_INTEGRATION
+  - chmod +x ./mvnw
 
-build:
+run-tests:
+  stage: test
+  script:
+    - ./mvnw test
+  rules:
+    - when: always
+
+build-and-push:
   stage: build
   script:
-    - docker build -t registry.gitlab.com/eladyesh/flink-springboot-demo/demo:$CI_COMMIT_TAG .
-    - docker push registry.gitlab.com/eladyesh/flink-springboot-demo/demo:$CI_COMMIT_TAG
+    - ./mvnw clean package -DskipTests
+    - docker build -t $IMAGE_BASE:$EFFECTIVE_TAG .
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    - docker push $IMAGE_BASE:$EFFECTIVE_TAG
   rules:
-    - if: '$CI_COMMIT_TAG'   # run only on tags
+    - if: '$CI_COMMIT_TAG'
+    - script: '[ "$DEPLOY_INTEGRATION" = "true" ]'
+      when: on_success
 
-deploy:
+deploy-integration:
   stage: deploy
   script:
-    # Add your deploy steps here, e.g., kubectl, ssh, etc.
-    - echo "Deploying docker image tagged $CI_COMMIT_TAG..."
+    - echo "Deploying to integration environment with image $IMAGE_BASE:$EFFECTIVE_TAG"
+  environment:
+    name: integration
   rules:
-    - if: '$CI_COMMIT_TAG'  # run only on tags
+    - script: '[ "$DEPLOY_INTEGRATION" = "true" ]'
+      when: on_success
+
+deploy-production:
+  stage: deploy
+  script:
+    - echo "Deploying to production environment with image $IMAGE_BASE:$EFFECTIVE_TAG"
+  environment:
+    name: production
+  rules:
+    - if: '$CI_COMMIT_TAG'

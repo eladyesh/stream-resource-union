@@ -1,0 +1,35 @@
+stages:
+  - run-unit-tests
+  - test-build
+  - build
+  - deploy
+
+run-unit-tests:
+  stage: run-unit-tests
+  script:
+    - mvn test   # runs all tests under src/test/java by default
+  rules:
+    - if: '$CI_COMMIT_TAG == null'   # run only if NOT a tagged commit
+
+test-build:
+  stage: test-build
+  script:
+    - mvn clean package
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'  # run on MRs only
+
+build:
+  stage: build
+  script:
+    - docker build -t registry.gitlab.com/eladyesh/flink-springboot-demo/demo:$CI_COMMIT_TAG .
+    - docker push registry.gitlab.com/eladyesh/flink-springboot-demo/demo:$CI_COMMIT_TAG
+  rules:
+    - if: '$CI_COMMIT_TAG'   # run only on tags
+
+deploy:
+  stage: deploy
+  script:
+    # Add your deploy steps here, e.g., kubectl, ssh, etc.
+    - echo "Deploying docker image tagged $CI_COMMIT_TAG..."
+  rules:
+    - if: '$CI_COMMIT_TAG'  # run only on tags

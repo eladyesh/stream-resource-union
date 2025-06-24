@@ -6,7 +6,8 @@ Create a Kafka topic named `otel-traces-a` with 1 partition and your specified r
 Replace `<kafka-container-id>` with your actual Kafka container ID.
 
 ```bash
-docker exec -it <kafka-container-id> kafka-topics --create --topic otel-traces-a --bootstrap-server localhost:9092 --partitions 1 --replication-factor <your-replication-factor> `````
+docker exec -it <kafka-container-id> kafka-topics --create --topic otel-traces-a --bootstrap-server localhost:9092 --partitions 1 --replication-factor <your-replication-factor> 
+```
 
 ---
 

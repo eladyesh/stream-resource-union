@@ -13,7 +13,7 @@ public class ResolvedSpanResources {
     public ResolvedSpanResources(ResourcesWrapper wrapper, SpanResourceFactory factory) {
         this.resources = wrapper.getResources()
                 .stream()
-                .map(factory::fromRaw)
+                .map(factory::createSpanResourceFromConfig)
                 .collect(Collectors.toList());
     }
 

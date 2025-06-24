@@ -1,22 +1,23 @@
 # Kafka Commands
 
-### Produce message:
-Use this command to send a JSON-formatted message to the Kafka topic `otel-traces-a`.
-
-```bash
-echo '{"traceId":"test123","span":"test-span","service":"test-service1234323423"}' | docker exec -i a7c54c0a3431 kafka-console-producer --broker-list localhost:9092 --topic otel-traces-a
-```
-
----
-
 ### Create topic:
 
 Create a Kafka topic named `otel-traces-a` with 1 partition and your specified replication factor.
 Replace `<kafka-container-id>` with your actual Kafka container ID.
 
 ```bash
-docker exec -it <kafka-container-id> kafka-topics --create --topic otel-traces-a --bootstrap-server localhost:9092 --partitions 1 --replication-factor 
+docker exec -it <kafka-container-id> kafka-topics --create --topic otel-traces-a --bootstrap-server localhost:9092 --partitions 1 --replication-factor <your-replication-factor> `````
+
+---
+
+
+### Produce message:
+Use this command to send a JSON-formatted message to the Kafka topic `otel-traces-a`.
+
+```bash
+echo '{"traceId":"test123","span":"test-span","service":"test-service1234323423"}' | docker exec -i <kafka-container-id> kafka-console-producer --broker-list localhost:9092 --topic otel-traces-a
 ```
+
 
 ---
 

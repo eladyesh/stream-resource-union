@@ -10,20 +10,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class SpanStreamBuilder {
 
-    private final ResolvedSpanResources config;
+    private final ResolvedSpanResources resolvedSpanResources;
 
-    public SpanStreamBuilder(ResolvedSpanResources config) {
-        this.config = config;
+    public SpanStreamBuilder(ResolvedSpanResources resolvedSpanResources) {
+        this.resolvedSpanResources = resolvedSpanResources;
     }
 
-    public DataStream<Span> unifiedStream(StreamExecutionEnvironment env) throws Exception {
-        DataStream<Span> result = null;
+    public DataStream<Span> buildUnifiedSpanStream(StreamExecutionEnvironment executionEnvironment) throws Exception {
+        DataStream<Span> unifiedSpanStream = null;
 
-        for (SpanResource res : config.getResources()) {
-            DataStream<Span> stream = res.resolveProvider().buildStream(env);
-            result = (result == null) ? stream : result.union(stream);
+        for (SpanResource spanResource : resolvedSpanResources.getResources()) {
+            DataStream<Span> individualSpanStream = spanResource.resolveProvider().buildStream(executionEnvironment);
+            unifiedSpanStream = (unifiedSpanStream == null)
+                    ? individualSpanStream
+                    : unifiedSpanStream.union(individualSpanStream);
         }
 
-        return result;
+        return unifiedSpanStream;
     }
 }

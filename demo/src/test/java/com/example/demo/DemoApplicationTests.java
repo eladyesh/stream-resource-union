@@ -87,7 +87,7 @@ public class DemoApplicationTests {
 
         SpanStreamBuilder builder = new SpanStreamBuilder(resolved);
 
-        DataStream<Span> unifiedStream = builder.unifiedStream(env);
+        DataStream<Span> unifiedStream = builder.buildUnifiedSpanStream(env);
 
         DataStream<String> output = unifiedStream.map(span ->
                 span.getTraceId() + "|" + span.getSpan() + "|" + span.getService()

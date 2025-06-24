@@ -25,7 +25,7 @@ public class DemoApplication {
     @Profile("!test")
     public CommandLineRunner runner(SpanStreamBuilder builder, StreamExecutionEnvironment env) {
         return args -> {
-            builder.unifiedStream(env)
+            builder.buildUnifiedSpanStream(env)
                     .map(span -> ">> SPAN: " + span)
                     .print();
 

@@ -11,7 +11,7 @@ public class SpanResourceFactory {
 
     private final ObjectMapper objectMapper;
 
-    private final Map<String, Class<? extends SpanStreamProvider>> registry = Map.of(
+    private final Map<String, Class<? extends SpanStreamProvider>> resourceTypeToConfigClass = Map.of(
             "kafka", KafkaConfig.class,
             "file", FileConfig.class
     );
@@ -20,15 +20,20 @@ public class SpanResourceFactory {
         this.objectMapper = objectMapper;
     }
 
-    public SpanResource fromRaw(Map<String, Object> raw) {
-        if (raw.size() != 1) throw new IllegalArgumentException("Each resource must have one type key");
-        String type = raw.keySet().iterator().next();
-        Object config = raw.get(type);
+    public SpanResource createSpanResourceFromConfig(Map<String, Object> resourceTypeToConfigData) {
+        if (resourceTypeToConfigData.size() != 1) {
+            throw new IllegalArgumentException("Each resource must have exactly one type key");
+        }
 
-        Class<? extends SpanStreamProvider> clazz = registry.get(type);
-        if (clazz == null) throw new IllegalArgumentException("Unknown resource type: " + type);
+        String resourceType = resourceTypeToConfigData.keySet().iterator().next();
+        Object configData = resourceTypeToConfigData.get(resourceType);
 
-        SpanStreamProvider provider = objectMapper.convertValue(config, clazz);
-        return new SpanResource(provider);
+        Class<? extends SpanStreamProvider> resourceTypeToConfigClassValue = resourceTypeToConfigClass.get(resourceType);
+        if (resourceTypeToConfigClassValue == null) {
+            throw new IllegalArgumentException("Unknown resource type: " + resourceType);
+        }
+
+        SpanStreamProvider providerInstance = objectMapper.convertValue(configData, resourceTypeToConfigClassValue);
+        return new SpanResource(providerInstance);
     }
 }

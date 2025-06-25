@@ -1,0 +1,13 @@
+resources:
+  - kafka:
+      topic: otel-traces-a
+      bootstrapServers: localhost:9092
+      encoding: json
+
+  - kafka:
+      topic: otel-traces-b
+      bootstrapServers: localhost:9092
+      encoding: json
+
+  - file:
+      path: spans.json
